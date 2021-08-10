@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from "react";
 import {render} from 'react-dom';
 import DeckGL from '@deck.gl/react';
 import {MVTLayer} from '@deck.gl/geo-layers';
@@ -52,12 +52,13 @@ function featureToGeoJSON(feature) {
 }
 
 export default function App({data_url = DATA_URL}) {
-    let tileIndex = null;
-
-    fetch(data_url).then(r => r.json()).then(d => {
-        tileIndex = geojsonvt(d, {extent: EXTENT, maxZoom: MAX_ZOOM});
-        console.log("index finished");
-    });
+    const [tileIndex, setTileIndex] = useState(null);
+    const loadTileIndex = async () => {
+        fetch(data_url).then(r => r.json()).then(d => {
+            const index = geojsonvt(d, {extent: EXTENT, maxZoom: MAX_ZOOM});
+            setTileIndex(index);
+        });
+    };
 
     const fetchData = (url) => {
         let _url = url.split("/");
@@ -109,9 +110,15 @@ export default function App({data_url = DATA_URL}) {
         }
     });
 
+    useEffect(() => {
+        loadTileIndex();
+        return () => {
+        };
+    }, []);
+
     return (
         <DeckGL
-            layers={[layer]}
+            layers={[tileIndex && layer]}
             initialViewState={INITIAL_VIEW_STATE}
             controller={true}
         >
